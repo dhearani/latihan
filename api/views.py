@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from base.models import Album, Musisi, Chef, Resep, Lokasi, Kewarganegaraan, Galeri, Gambar
-from .serializers import AlbumSerializer, MusisiSerializer, ChefSerializer, ResepSerializer, ChefsSerializer, LokasiSerializer, GaleriSerializer, GambarSerializer, RegisterSerializer, MyTokenObtainPairSerializer
+from base.models import Album, Musisi, Chef, Resep, Lokasi, Kewarganegaraan, Galeri, Gambar, Berkas
+from .serializers import AlbumSerializer, MusisiSerializer, ChefSerializer, ResepSerializer, ChefsSerializer, BerkasSerializer, LokasiSerializer, GaleriSerializer, GambarSerializer, RegisterSerializer, MyTokenObtainPairSerializer
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from django.http import HttpResponse
@@ -194,3 +194,7 @@ class GaleriViewSet(ModelViewSet):
 class GambarViewSet(ModelViewSet):
     queryset = Gambar.objects.all()
     serializer_class = GambarSerializer
+    
+class BerkasViewSet(ModelViewSet):
+    queryset = Berkas.objects.all()
+    serializer_class = BerkasSerializer

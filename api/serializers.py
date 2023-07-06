@@ -11,6 +11,7 @@ from django.contrib import messages
 import cloudinary
 import cloudinary.uploader
 
+
 class DetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Detail
@@ -176,14 +177,17 @@ class LokasiSerializer(serializers.ModelSerializer):
         model = Lokasi
         fields = '__all__'
 
+
+
 class BerkasSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = Berkas
         fields = ('id', 'galeri', 'pdf', 'ket')
         
     def create(self, validated_data):
         pdf = validated_data.pop('pdf', None)
-        
+        print(pdf)
         child_instance = super().create(validated_data)
         if pdf:
             cloudinary_storage = RawMediaCloudinaryStorage()
@@ -264,8 +268,7 @@ class GaleriSerializer(NestedUpdateMixin, serializers.ModelSerializer):
         print(old_dokumen)
         # Delete the old file from Cloudinary
         if old_dokumen:
-            cloudinary_storage = RawMediaCloudinaryStorage
-            hasil = cloudinary_storage.destroy(old_dokumen.name)
+            hasil = cloudinary.uploader.destroy(old_dokumen.name)
             print("hasil old_dokumen", hasil)
             
         gambars_data = validated_data.pop('gambar', [])
@@ -276,8 +279,7 @@ class GaleriSerializer(NestedUpdateMixin, serializers.ModelSerializer):
             old_gambar = images.foto
             print(old_gambar)
             if old_gambar:
-                cloudinary_storage = RawMediaCloudinaryStorage
-                hasil1 = cloudinary_storage.destroy(old_gambar.name)
+                hasil1 = cloudinary.uploader.destroy(old_gambar.name)
                 print("hasil old_gambar", hasil1)
         
         berkass_data = validated_data.pop('berkas', [])
@@ -286,8 +288,7 @@ class GaleriSerializer(NestedUpdateMixin, serializers.ModelSerializer):
         old_berkas = berkass.pdf
         print(old_berkas)
         if old_berkas:
-            cloudinary_storage = RawMediaCloudinaryStorage
-            hasil2 = cloudinary_storage.destroy(old_berkas.name)
+            hasil2 = cloudinary.uploader.destroy(old_berkas.name)
             print("hasil old_berkas", hasil2)
         
         # instance.nama = validated_data.pop('nama', instance.nama)
