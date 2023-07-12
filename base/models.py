@@ -7,6 +7,7 @@ from django.utils.deconstruct import deconstructible
 # from geoposition.fields import GeopositionField
 
 # Create your models here.
+
 class Detail(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
     nik = models.CharField(max_length=16, unique=True)
@@ -48,12 +49,24 @@ class Kewarganegaraan(models.Model):
     artis = models.OneToOneField(Musisi, on_delete=models.CASCADE, null=True, related_name='nat_artis')
     bangsa = models.CharField(max_length=50, null=True)
 
+class MonthYearField(models.DateField):
+    def to_python(self, value):
+        if isinstance(value, str):
+            return super().to_python(value).strftime("%Y-%m")
+        return value
+
+    def get_prep_value(self, value):
+        if isinstance(value, str):
+            return value
+        return super().get_prep_value(value)
+
 class Lokasi(models.Model):
     nama = models.CharField(max_length=50)
     lat = models.FloatField(null=True, blank=True)   
     lon = models.FloatField(null=True, blank=True)
     point = models.PointField(null=True)
-    
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    month_year = MonthYearField(null=True)
     def __str__(self):
         return self.nama
     
@@ -77,4 +90,26 @@ class Berkas(models.Model):
     galeri = models.OneToOneField(Galeri, on_delete=models.CASCADE, null=True, related_name='berkas')
     pdf = models.FileField((""), upload_to='assets', null=True, validators=[PDFValidator()])
     ket = models.CharField(max_length=10, null=True)
+    
+class Koperasi(models.Model):
+    nama = models.CharField(max_length=10)
+    
+class JenisProdukKoperasi(models.Model):
+    koperasi = models.ForeignKey(Koperasi, on_delete=models.CASCADE, null=True, related_name='jenis_produk_koperasi')
+    komoditi = models.CharField(max_length=10)
+    
+class UMKM(models.Model):
+    nama = models.CharField(max_length=10)
+    omzet = models.IntegerField()
+    skala = models.CharField(max_length=10)
+    
+class JenisProdukUMKM(models.Model):
+    umkm = models.ForeignKey(UMKM, on_delete=models.CASCADE, null=True, related_name='jenis_produk_umkm')
+    komoditi = models.CharField(max_length=10)
+    
+class PermintaanProduk(models.Model):
+    umkm = models.ForeignKey(UMKM, on_delete=models.CASCADE, null=True, related_name='permintaan_produk_umkm')
+    bulan = models.CharField(max_length=10)
+    permintaan = models.IntegerField()
+    produksi = models.IntegerField(null=True)
     

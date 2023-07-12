@@ -1,7 +1,6 @@
 from django.urls import path
 from . import views
-from api.views import MusisiListView, MusisiView, AlbumListView, ChefListView, ChefView, ResepListView, ResepView, PieChartView, LokasiView, MyObtainTokenPairView, LogoutView
-
+from api.views import MusisiListView, MusisiView, AlbumListView, ChefListView, ChefView, ResepListView, ResepView, PieChartView, LokasiView, MyObtainTokenPairView, LogoutView, BullwhipEffectUMKM, MovingAverageUMKM, Contoh
 urlpatterns = [
      path('MusisiListView/', MusisiListView.as_view()),
      path('MusisiView/<int:pk>/', MusisiView.as_view()),
@@ -16,4 +15,8 @@ urlpatterns = [
      path('logout/', LogoutView.as_view(), name='logout'),
      # path('marker/', LokasiMarkerView.as_view()),
      # path('galeri/<int:pk>/', GaleriViewSet.as_view({'get': 'list', 'get': 'retrieve', 'post': 'create', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'})),
+
+     path('be/', BullwhipEffectUMKM.as_view()),
+     path('ma/', MovingAverageUMKM.as_view()),
+     path('contoh/', Contoh.as_view()),
 ]

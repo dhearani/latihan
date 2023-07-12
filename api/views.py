@@ -2,8 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from base.models import Album, Musisi, Chef, Resep, Lokasi, Kewarganegaraan, Galeri, Gambar, Berkas
+from base.models import Album, Musisi, Chef, Resep, Lokasi, Kewarganegaraan, Galeri, Gambar, Berkas, UMKM, Koperasi, PermintaanProduk, JenisProdukKoperasi, JenisProdukUMKM
 from .serializers import AlbumSerializer, MusisiSerializer, ChefSerializer, ResepSerializer, ChefsSerializer, BerkasSerializer, LokasiSerializer, GaleriSerializer, GambarSerializer, RegisterSerializer, MyTokenObtainPairSerializer
+from .serializers import UMKMSerializer, KoperasiSerializer, JenisProdukKoperasiSerializer, JenisProdukUMKMSerializer, PermintaanProdukSerializer
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from django.http import HttpResponse
@@ -198,3 +199,106 @@ class GambarViewSet(ModelViewSet):
 class BerkasViewSet(ModelViewSet):
     queryset = Berkas.objects.all()
     serializer_class = BerkasSerializer
+
+class KoperasiViewSet(ModelViewSet):
+    queryset = Koperasi.objects.all()
+    serializer_class = KoperasiSerializer
+    
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['nama']  # Replace with the fields you want to filter on
+    search_fields = ['nama']
+
+class UMKMViewSet(ModelViewSet):
+    queryset = UMKM.objects.all()
+    serializer_class = UMKMSerializer
+    
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['nama_usaha']  # Replace with the fields you want to filter on
+    search_fields = ['nama_usaha']
+
+class JenisProdukUMKMViewSet(ModelViewSet):
+    queryset = JenisProdukUMKM.objects.all()
+    serializer_class = JenisProdukUMKMSerializer
+    
+class JenisProdukKoperasiViewSet(ModelViewSet):
+    queryset = JenisProdukKoperasi.objects.all()
+    serializer_class = JenisProdukKoperasiSerializer
+    
+class PermintaanProdukViewSet(ModelViewSet):
+    queryset = PermintaanProduk.objects.all()
+    serializer_class = PermintaanProdukSerializer
+
+
+from django.db.models import Avg, StdDev, Count, Sum, Window
+from collections import Counter
+class Contoh(APIView):
+    def get(self, request):
+        # x_pos = [0, 1, 2, 3]
+        # x_axis = ['A', 'B', 'C', 'D']
+
+        # plt.plot(x_pos, [5, 2, 7, 9])
+
+        # plt.xticks(x_pos, x_axis)
+
+        # plt.show()
+        
+        x_pos = [0, 1, 2, 3]
+        x_axis = ['A', 'B', 'C', 'D']
+        y_values = [5, 2, 7, 9]
+
+        plt.bar(x_pos, y_values)
+        plt.xticks(x_pos, x_axis)
+
+        plt.show()
+
+import math
+import numpy as np
+# Bullwhip Effect KUMKM
+class BullwhipEffectUMKM(APIView):
+    def get(self, request, format=None):
+        queryset = PermintaanProduk.objects.all()
+        
+        permintaan = list(queryset.values_list('permintaan', flat=True))
+        produksi = list(queryset.values_list('produksi', flat=True))
+        bulan = queryset.values_list('bulan', flat=True)
+        count_bulan = len(bulan)
+        
+        print("jumlah bulan", count_bulan)
+        
+        avg_pm = np.mean(permintaan)
+        avg_pd = np.mean(produksi)
+
+        std_pm = np.std(permintaan, ddof=1)
+        std_pd = np.std(produksi, ddof=1)
+
+        koef_pm = std_pm/avg_pm
+        koef_pd = std_pd/avg_pd
+        
+        be = koef_pd / koef_pm
+        
+        par = (1+(2*1/count_bulan)+(1**2/(count_bulan**2)))
+        print(par)
+        
+        if(be > par):
+            print(False)
+        else:
+            print(True)
+            
+        return Response(permintaan)
+
+# Permintaan Produk UMKM
+class MovingAverageUMKM(APIView):
+    def get(self):
+        distinct_komoditi = UMKM.objects.values_list('JenisProdukUMKM__komoditi', flat=True).distinct()
+        monthly_permintaan = PermintaanProduk.objects.values('bulan').annotate(total_permintaan=Sum('permintaan'))
+        sum_permintaan = PermintaanProduk.objects.aggregate(Sum('permintaan'))
+        ma = Sum(Count(monthly_permintaan)) / Count(distinct_komoditi)
+        
+        return ma
+    
+# Rata" Kinerja Pemasok UMKM
+class AverageSupplierPerfUMKM(APIView):
+    def get(self):
+        # tabel prioritas
+    
+        return

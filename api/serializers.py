@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from base.models import Album, Musisi, Chef, Resep, Kewarganegaraan, Lokasi, Gambar, Galeri, Berkas, Detail
+from base.models import Album, Musisi, Chef, Resep, Kewarganegaraan, Lokasi, Gambar, Galeri, Berkas, Detail, JenisProdukKoperasi, JenisProdukUMKM, PermintaanProduk, UMKM, Koperasi
 from drf_writable_nested import WritableNestedModelSerializer, NestedUpdateMixin
 from cloudinary_storage.storage import RawMediaCloudinaryStorage
 from cloudinary import uploader
@@ -7,7 +7,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 from django.contrib import messages
+from django.contrib.gis.geos import Point
 import cloudinary
 import cloudinary.uploader
 
@@ -173,11 +175,41 @@ class ChefsSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class LokasiSerializer(serializers.ModelSerializer):
+    # month_year = serializers.SerializerMethodField
+    
     class Meta:
         model = Lokasi
-        fields = '__all__'
+        fields = ('id', 'nama', 'lon', 'lat', 'point', 'created_at', 'month_year')
 
+    # def get_month_year(self, obj):
+    #     return obj.month_year.strftime("%B %Y")
+    
+    def get_point(self, obj):
+            lon = obj.lon
+            lat = obj.lat
+            
+            if lon is not None and lat is not None:
+                return {
+                    'type': 'Point',
+                    'coordinates': [lon, lat]
+                }
+            return None
 
+    def validate(self, data):
+            lon = data.get('lon')
+            lat = data.get('lat')
+
+            if lon is not None and lat is not None:
+                point = Point(lon, lat)
+                data['point'] = point
+
+            return data
+
+    def create(self, validated_data):
+        
+        instance = super().create(validated_data)
+        instance.save()
+        return instance
 
 class BerkasSerializer(serializers.ModelSerializer):
     
@@ -327,3 +359,70 @@ class GaleriSerializer(NestedUpdateMixin, serializers.ModelSerializer):
         instance.delete()
         # return Response({"Success": "Data deleted successfully"}, status=status.HTTP_202_OK)
         return messages.success(self.request, 'Form submission successful')
+    
+class JenisProdukUMKMSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JenisProdukUMKM
+        fields = '__all__'
+    
+class PermintaanProdukSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PermintaanProduk
+        fields = '__all__'
+    
+class JenisProdukKoperasiSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JenisProdukKoperasi
+        fields = '__all__'
+            
+class UMKMSerializer(NestedUpdateMixin, serializers.ModelSerializer):
+    jenis_produk_umkm = JenisProdukUMKMSerializer(many=True)
+    permintaan_produk_umkm = PermintaanProdukSerializer(many=True)
+        
+    class Meta:
+        model = UMKM
+        fields = ['id', 'nama', 'omzet', 'skala', 'jenis_produk_umkm', 'permintaan_produk_umkm']
+        
+    def create(self, validated_data):
+        jps_data = validated_data.pop('jenis_produk_umkm')
+        pps_data = validated_data.pop('permintaan_produk_umkm')
+        instance = super().create(validated_data)
+        
+        for jp_data in jps_data:
+            jp_data['umkm'] = instance.pk
+            jp_serializer = JenisProdukUMKMSerializer(data=jp_data)
+            jp_serializer.is_valid(raise_exception=True)
+            jp_serializer.save()
+        
+        for pp_data in pps_data:
+            pp_data['umkm'] = instance.pk
+            pp_serializer = PermintaanProdukSerializer(data=pp_data)
+            pp_serializer.is_valid(raise_exception=True)
+            pp_serializer.save()
+        
+        instance.save()
+        return instance
+           
+class KoperasiSerializer(serializers.ModelSerializer):
+    jenis_produk_koperasi = JenisProdukKoperasiSerializer(many=True)
+    class Meta:
+        model = Koperasi
+        fields = ['id', 'nama', 'jenis_produk_koperasi']
+    
+    def create(self, validated_data):
+        jps_data = validated_data.pop('jenis_produk_koperasi')
+        
+        instance = super().create(validated_data)
+        
+        for jp_data in jps_data:
+            jp_data['koperasi'] = instance.pk
+            jp_serializer = JenisProdukKoperasiSerializer(data=jp_data)
+            jp_serializer.is_valid(raise_exception=True)
+            jp_serializer.save()
+        
+        instance.save()
+        return instance
+            
+            
+    
+    
